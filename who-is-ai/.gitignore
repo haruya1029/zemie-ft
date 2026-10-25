@@ -1,0 +1,8 @@
+# DB接続情報
+db/connect_db.php
+
+# macOS
+.DS_Store
+
+# 環境変数
+.env
