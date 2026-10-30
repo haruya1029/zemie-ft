@@ -47,12 +47,14 @@ try {
             border-radius: 8px;
             color: #fff;
             font-family: sans-serif;
+            position: relative;
         }
         .room-header {
             text-align: center;
             border-bottom: 1px solid #333;
             padding-bottom: 16px;
             margin-bottom: 24px;
+            margin-top: 20px;
         }
         .room-code-box {
             font-size: 2.5rem;
@@ -105,6 +107,7 @@ try {
             font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
+            margin-top: 12px;
         }
         .btn-start:disabled {
             background: #444;
@@ -115,12 +118,43 @@ try {
             text-align: center;
             color: #888;
             font-size: 0.9rem;
+            margin-top: 16px;
+        }
+
+        /* 退出/戻るボタン用スタイル */
+        .btn-leave {
+            background: transparent;
+            color: #ff4444;
+            border: 1px solid #ff4444;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-leave:hover {
+            background: #ff4444;
+            color: #fff;
+        }
+        .room-top-bar {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
 
 <div class="room-container">
+    <!-- 退出 / 戻るボタン領域 -->
+    <div class="room-top-bar">
+        <button id="btn-leave-room" class="btn-leave">← LEAVE ROOM</button>
+    </div>
+
     <div class="room-header">
         <p style="color: #aaa; margin: 0; font-size: 0.85rem;">ROOM CODE</p>
         <div class="room-code-box"><?php echo htmlspecialchars($roomCode, ENT_QUOTES, 'UTF-8'); ?></div>
@@ -150,6 +184,31 @@ try {
 <!-- 統合JSファイルを読み込み -->
 <script src="../js/script.js"></script>
 
+<script>
+// 部屋退出処理
+document.addEventListener('DOMContentLoaded', () => {
+    const leaveBtn = document.getElementById('btn-leave-room');
+    if (leaveBtn) {
+        leaveBtn.addEventListener('click', async () => {
+            if (!confirm('ルームから退出しますか？')) return;
+
+            try {
+                const response = await fetch('../api/room_leave.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                // 成否に関わらずホーム画面に移動
+                window.location.href = 'home.php';
+            } catch (err) {
+                window.location.href = 'home.php';
+            }
+        });
+    }
+});
+</script>
+
 <?php if ($isHost): ?>
 <script>
 // ホスト用のゲーム開始処理
@@ -159,7 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startBtn.addEventListener('click', async () => {
             startBtn.disabled = true;
             try {
-                // ※③ゲーム進行担当の api/game_start.php 等を呼ぶ想定
                 const response = await fetch('../api/game_start.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
