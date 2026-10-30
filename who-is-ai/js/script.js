@@ -18,8 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // CREATE ROOM ボタン処理
+    // CREATE ROOM ボタンの設定
     if (primaryBtn) {
-        enableButton(primaryBtn);
+        primaryBtn.removeAttribute('disabled'); // disabled属性を解除
 
         primaryBtn.addEventListener('click', async () => {
             primaryBtn.disabled = true;
@@ -35,18 +36,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = 'room.php';
                 } else {
                     alert(data.message || 'ルーム作成に失敗しました。');
-                    enableButton(primaryBtn);
+                    primaryBtn.disabled = false;
                 }
             } catch (err) {
                 alert('通信エラーが発生しました。');
-                enableButton(primaryBtn);
+                primaryBtn.disabled = false;
             }
         });
     }
 
     // JOIN ROOM ボタン処理
+    // JOIN ROOM ボタンの設定
     if (secondaryBtn) {
-        enableButton(secondaryBtn);
+        secondaryBtn.removeAttribute('disabled'); // disabled属性を解除
 
         secondaryBtn.addEventListener('click', async () => {
             let roomCode = prompt('6桁のルームコードを入力してください:');
@@ -83,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
        2. 待機部屋画面（room.php）用の処理
           ・参加者一覧とゲーム開始ステータスの3秒周期監視
        =================================================== */
+    // 待機部屋要素（例: #player-list や room.php 固有の要素）が存在する場合のみポーリングを実行
     const isRoomPage = window.location.pathname.includes('room.php') || document.getElementById('player-list');
 
     if (isRoomPage) {
@@ -102,6 +105,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && Array.isArray(data.players)) {
+            // 参加者一覧の取得・更新
+            fetch('api/players.php')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log("現在の参加者:", data.players);
+                        // HTML要素（<ul id="player-list"> など）を更新する処理
                         const listEl = document.getElementById('player-list');
                         const countEl = document.getElementById('player-count');
 
@@ -134,6 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.room && data.room.status === 'playing') {
+            // ルーム状態の監視（ホストがスタートしたか検知）
+            fetch('api/room_status.php')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.room.status === 'playing') {
+                        // ホストがゲームを開始したら game.php に遷移
                         window.location.href = 'game.php';
                     }
                 })
@@ -141,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 初回実行 ＋ 3秒ごとの定期監視
+        // 初回実行 ＋ 3秒ごとの定期ポーリング開始
         checkRoomStatus();
         setInterval(checkRoomStatus, 3000);
     }
