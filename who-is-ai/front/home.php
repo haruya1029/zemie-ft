@@ -160,14 +160,14 @@ require_once __DIR__ . '/../back/home_process.php';
 
                 <button type="button"
                         class="btn-primary"
-                        disabled>
+                        >
                     <span>CREATE ROOM</span>
                     <span>↗</span>
                 </button>
 
                 <button type="button"
                         class="btn-secondary"
-                        disabled>
+                        >
                     <span>JOIN ROOM</span>
                     <span>→</span>
                 </button>
@@ -283,6 +283,8 @@ require_once __DIR__ . '/../back/home_process.php';
         <span>NODE / WHO-IS-AI</span>
         <span>© 2026 WHO IS AI?</span>
     </footer>
+    <script src="../js/script.js"></script>
+    
 
 </div>
 </body>
