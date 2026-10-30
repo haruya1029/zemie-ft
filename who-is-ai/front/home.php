@@ -284,8 +284,9 @@ require_once __DIR__ . '/../back/home_process.php';
         <span>© 2026 WHO IS AI?</span>
     </footer>
     <script src="../js/script.js"></script>
-    
+
 
 </div>
 </body>
 </html>
+                                

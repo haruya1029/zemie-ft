@@ -2,23 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* ===================================================
        1. ホーム画面（home.php）用の処理
+          ・CREATE ROOM / JOIN ROOM ボタンの有効化と通信
        =================================================== */
     const primaryBtn = document.querySelector('.home-menu .btn-primary');
     const secondaryBtn = document.querySelector('.home-menu .btn-secondary');
 
-    // ボタンの無効化（disabled・CSSカーソル・ pointer-events）を完全に強制作業で解除する関数
-    function enableButton(btn) {
-        if (!btn) return;
-        btn.removeAttribute('disabled');             // HTML属性を削除
-        btn.disabled = false;                        // JSプロパティを解除
-        btn.style.cursor = 'pointer';                // カーソルをポインター（指マーク）に変更
-        btn.style.pointerEvents = 'auto';            // クリックイベントを強制許可
-        btn.style.opacity = '1';                     // 半透明化を解除
-    }
-
-    // CREATE ROOM ボタンを有効化
+    // CREATE ROOM ボタンの設定
     if (primaryBtn) {
-        enableButton(primaryBtn);
+        primaryBtn.removeAttribute('disabled'); // disabled属性を解除
 
         primaryBtn.addEventListener('click', async () => {
             primaryBtn.disabled = true;
@@ -34,18 +25,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = 'room.php';
                 } else {
                     alert(data.message || 'ルーム作成に失敗しました。');
-                    enableButton(primaryBtn);
+                    primaryBtn.disabled = false;
                 }
             } catch (err) {
                 alert('通信エラーが発生しました。');
-                enableButton(primaryBtn);
+                primaryBtn.disabled = false;
             }
         });
     }
 
-    // JOIN ROOM ボタンを有効化
+    // JOIN ROOM ボタンの設定
     if (secondaryBtn) {
-        enableButton(secondaryBtn);
+        secondaryBtn.removeAttribute('disabled'); // disabled属性を解除
 
         secondaryBtn.addEventListener('click', async () => {
             const roomCode = prompt('6桁のルームコードを入力してください:');
@@ -78,15 +69,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* ===================================================
        2. 待機部屋画面（room.php）用の処理
+          ・参加者一覧とゲーム開始ステータスの3秒周期監視
        =================================================== */
+    // 待機部屋要素（例: #player-list や room.php 固有の要素）が存在する場合のみポーリングを実行
     const isRoomPage = window.location.pathname.includes('room.php') || document.getElementById('player-list');
 
     if (isRoomPage) {
         function checkRoomStatus() {
+            // 参加者一覧の取得・更新
             fetch('api/players.php')
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
+                        console.log("現在の参加者:", data.players);
+                        // HTML要素（<ul id="player-list"> など）を更新する処理
                         const listEl = document.getElementById('player-list');
                         if (listEl) {
                             listEl.innerHTML = data.players.map(p => `
@@ -101,16 +97,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .catch(err => console.error("プレイヤー取得エラー:", err));
 
+            // ルーム状態の監視（ホストがスタートしたか検知）
             fetch('api/room_status.php')
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.room.status === 'playing') {
+                        // ホストがゲームを開始したら game.php に遷移
                         window.location.href = 'game.php';
                     }
                 })
                 .catch(err => console.error("ステータス確認エラー:", err));
         }
 
+        // 初回実行 ＋ 3秒ごとの定期ポーリング開始
         checkRoomStatus();
         setInterval(checkRoomStatus, 3000);
     }
