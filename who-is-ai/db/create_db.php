@@ -134,3 +134,4 @@ try{
     exit('テーブル作成エラー: ' . $e->getMessage());
 }
         
+
