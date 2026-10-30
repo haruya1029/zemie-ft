@@ -86,33 +86,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const isRoomPage = window.location.pathname.includes('room.php') || document.getElementById('player-list');
 
     if (isRoomPage) {
+        // アバターIDから絵文字への変換マッピング
+        const avatarMap = {
+            'robot': '🤖',
+            'human': '👤',
+            'ghost': '👻',
+            'cat': '🐱',
+            'brain': '🧠',
+            'smile': '😊'
+        };
+
         function checkRoomStatus() {
             // 1. 参加者一覧の取得・描画更新
             fetch('../api/players.php')
                 .then(res => res.json())
                 .then(data => {
-                    console.log('取得したプレイヤー情報:', data); // デバッグ用
-
                     if (data.success && Array.isArray(data.players)) {
                         const listEl = document.getElementById('player-list');
                         const countEl = document.getElementById('player-count');
 
-                        // 人数カウントの更新
                         if (countEl) {
                             countEl.textContent = data.players.length;
                         }
 
-                        // リストの描画更新
                         if (listEl) {
-                            listEl.innerHTML = data.players.map(p => `
-                                <li class="player-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #181818; border-radius: 6px; margin-bottom: 8px;">
-                                    <div class="player-info" style="display: flex; align-items: center; gap: 12px;">
-                                        <span class="avatar" style="font-size: 1.5rem;">${p.avatar_id || '🤖'}</span>
-                                        <span class="name" style="color: #fff; font-weight: bold;">@${p.username || 'UNKNOWN'}</span>
-                                    </div>
-                                    ${p.is_host ? '<span class="badge-host" style="background: #00ff66; color: #000; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 4px;">HOST</span>' : ''}
-                                </li>
-                            `).join('');
+                            listEl.innerHTML = data.players.map(p => {
+                                // avatar_id が文字列（'robot'等）なら絵文字に変換。未設定等の場合はフォールバック
+                                const displayAvatar = avatarMap[p.avatar_id] || p.avatar_id || '🤖';
+
+                                return `
+                                    <li class="player-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #181818; border-radius: 6px; margin-bottom: 8px;">
+                                        <div class="player-info" style="display: flex; align-items: center; gap: 12px;">
+                                            <span class="avatar" style="font-size: 1.5rem;">${displayAvatar}</span>
+                                            <span class="name" style="color: #fff; font-weight: bold;">@${p.username || 'UNKNOWN'}</span>
+                                        </div>
+                                        ${p.is_host ? '<span class="badge-host" style="background: #00ff66; color: #000; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 4px;">HOST</span>' : ''}
+                                    </li>
+                                `;
+                            }).join('');
                         }
                     }
                 })
@@ -129,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch(err => console.error("ステータス確認エラー:", err));
         }
 
-        // 初回実行 ＋ 3秒ごとの自動更新
+        // 初回実行 ＋ 3秒ごとの定期監視
         checkRoomStatus();
         setInterval(checkRoomStatus, 3000);
     }
