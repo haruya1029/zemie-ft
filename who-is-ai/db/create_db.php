@@ -127,7 +127,40 @@ try{
         ADD COLUMN IF NOT EXISTS avatar_id
         VARCHAR(20) NOT NULL DEFAULT 'robot'
     ");
+    // WHO IS AI? のお題を登録
+    $questions = [
+        '無人島に1つだけ持っていくなら何？',
+        '100万円もらえたら何に使う？',
+        '1日だけ透明人間になれたら何をする？',
+        '人生で一度は行ってみたい場所は？',
+        '自分を動物に例えるなら何？'
+    ];
 
+    $stmt = $pdo->prepare("
+        INSERT INTO who_is_ai.questions (question_text)
+        SELECT :question
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM who_is_ai.questions
+            WHERE question_text = :existing_question
+        )
+    ");
+
+    foreach ($questions as $question) {
+        $stmt->execute([
+            ':question' => $question,
+            ':existing_question' => $question
+        ]);
+    }
+
+    // 登録されたお題の数を確認
+    $stmt = $pdo->query("
+        SELECT COUNT(*) FROM who_is_ai.questions
+    ");
+
+    $count = $stmt->fetchColumn();
+
+    echo "現在のお題数：" . $count . "件<br>";
     echo "テーブル作成が完了しました。";
 
 }catch (PDOException $e) {
