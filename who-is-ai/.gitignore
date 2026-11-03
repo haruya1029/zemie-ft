@@ -7,4 +7,5 @@ db/connect_db.php
 # 環境変数
 .env
 
-config/gemini_config.php
+# Gemini APIキー
+back/config/gemini_config.php
