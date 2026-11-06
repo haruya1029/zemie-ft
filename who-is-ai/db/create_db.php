@@ -92,6 +92,28 @@ try{
         )
     ");
 
+
+    // emoji_poolsテーブル
+    // 回答ごとに配られた12個の絵文字を保存
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS who_is_ai.emoji_pools (
+            id SERIAL PRIMARY KEY,
+
+            answer_id INTEGER NOT NULL UNIQUE
+                REFERENCES who_is_ai.answers(id)
+                ON DELETE CASCADE,
+
+            emojis JSONB NOT NULL,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+            CHECK (
+                jsonb_typeof(emojis) = 'array'
+                AND jsonb_array_length(emojis) = 12
+            )
+        )
+    ");
+
     //votes投票のテーブル作成
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS who_is_ai.votes (

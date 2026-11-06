@@ -2,35 +2,84 @@
 <?php
 /**
  * WHO IS AI?
- * Gemini APIで回答と絵文字ヒント3つを生成
+ * Gemini APIによる回答・絵文字生成
  *
- * ・自然な大学生らしい回答
- * ・絵文字ヒントは絵文字のみ
- * ・固定回答なし
- * ・生成内容がおかしい場合は最大3回試す
+ * AIも人間と同じ条件で、
+ * カテゴリー別の12個から絵文字3個を選ぶ。
  */
 
-function generateAiAnswer($question)
-{
-    $question = trim((string)$question);
+/**
+ * @param string $question お題
+ * @param array|null $emojiPool AIに配布する12個
+ * @return array 回答・選択絵文字・候補12個
+ */
+function generateAiAnswer(
+    string $question,
+    ?array $emojiPool = null
+): array {
+
+    $question = trim($question);
 
     if ($question === '') {
-        throw new Exception('お題が入力されていません。');
+        throw new Exception(
+            'お題が入力されていません。'
+        );
     }
 
-    // APIキーを読み込む
-    $configPath = __DIR__ . '/../config/gemini_config.php';
+    // 絵文字候補生成用ファイル
+    require_once __DIR__ . '/emoji_pool.php';
+
+    // 候補を指定していない場合は新規生成
+    if ($emojiPool === null) {
+        $emojiPool = generateEmojiPool();
+    }
+
+    // 12個・重複なしを確認
+    if (
+        count($emojiPool) !== 12 ||
+        count(array_unique($emojiPool)) !== 12
+    ) {
+        throw new Exception(
+            'AI用の絵文字候補が不正です。'
+        );
+    }
+
+    foreach ($emojiPool as $emoji) {
+        if (!is_string($emoji) || $emoji === '') {
+            throw new Exception(
+                '絵文字候補に不正な値があります。'
+            );
+        }
+    }
+
+    // APIキー読み込み
+    $configPath =
+        __DIR__ . '/../config/gemini_config.php';
 
     if (!is_file($configPath)) {
-        throw new Exception('Geminiの設定ファイルがありません。');
+        throw new Exception(
+            'Geminiの設定ファイルがありません。'
+        );
     }
 
     $config = require $configPath;
-    $apiKey = trim((string)($config['api_key'] ?? ''));
+
+    $apiKey = trim(
+        (string)($config['api_key'] ?? '')
+    );
 
     if ($apiKey === '') {
-        throw new Exception('Gemini APIキーが設定されていません。');
+        throw new Exception(
+            'Gemini APIキーが設定されていません。'
+        );
     }
+
+    // Geminiに渡す候補をJSONにする
+    $emojiList = json_encode(
+        $emojiPool,
+        JSON_UNESCAPED_UNICODE |
+        JSON_THROW_ON_ERROR
+    );
 
     // Geminiへの指示
     $prompt = <<<PROMPT
@@ -56,20 +105,38 @@ function generateAiAnswer($question)
 ・回答文には絵文字を入れない
 ・前置きや解説は書かない
 
-【絵文字ヒントのルール】
-・回答に関連する絵文字を3つ作る
-・3つとも違う絵文字にする
-・1つの項目には絵文字を1個だけ入れる
-・文章、単語、数字、顔文字は入れない
-・一般的な絵文字を使用する
-・国旗や複雑な組み合わせは避ける
-・回答そのものを直接表す絵文字は避ける
-・少し遠回しなヒントにする
+【あなたに配られた12個の絵文字】
+{$emojiList}
 
-【出力例】
-{"answer":"友達の本音を聞く","emojis":["👂","🤫","👥"]}
+【絵文字選択のルール】
+・回答を決めてから絵文字を選択する
+・上記の12個だけを使用する
+・12個以外の絵文字は絶対に使わない
+・回答に関連する絵文字を3個選ぶ
+・同じ絵文字を重複して選ばない
+・絵文字の順番は自由
+・無理に分かりやすい組み合わせにしなくてもよい
+・人間が限られた候補から選ぶように考える
+・回答そのものを直接表現できなくてもよい
+・少し遠回しな連想でもよい
+・文章や数字を絵文字欄に入れない
+・絵文字は候補と完全に同じ文字列で返す
 
-必ずJSON形式でanswerとemojisを返してください。
+【重要】
+このゲームでは回答文は投票時に公開されません。
+プレイヤーは絵文字3個だけからAIを推理します。
+
+自然な回答を考え、その回答を配布された絵文字だけで
+表現してください。
+
+必ず以下のJSON形式で返してください。
+
+{
+  "answer": "回答文",
+  "emojis": ["絵文字1", "絵文字2", "絵文字3"]
+}
+
+JSON以外の文章は出力しないでください。
 PROMPT;
 
     // Gemini APIに送るデータ
@@ -77,7 +144,9 @@ PROMPT;
         'contents' => [
             [
                 'parts' => [
-                    ['text' => $prompt]
+                    [
+                        'text' => $prompt
+                    ]
                 ]
             ]
         ],
@@ -93,19 +162,23 @@ PROMPT;
 
             'responseSchema' => [
                 'type' => 'OBJECT',
+
                 'properties' => [
                     'answer' => [
                         'type' => 'STRING'
                     ],
+
                     'emojis' => [
                         'type' => 'ARRAY',
                         'items' => [
-                            'type' => 'STRING'
+                            'type' => 'STRING',
+                            'enum' => array_values($emojiPool)
                         ],
                         'minItems' => 3,
                         'maxItems' => 3
                     ]
                 ],
+
                 'required' => [
                     'answer',
                     'emojis'
@@ -114,14 +187,21 @@ PROMPT;
         ]
     ];
 
-    // Gemini API
+    // Gemini APIのURL
     $url =
         'https://generativelanguage.googleapis.com/v1beta/models/' .
         'gemini-2.5-flash:generateContent';
 
-    $lastReason = '回答の形式が正しくありません。';
+    $requestBody = json_encode(
+        $data,
+        JSON_UNESCAPED_UNICODE |
+        JSON_THROW_ON_ERROR
+    );
 
-    // 最大3回まで生成を試す
+    $lastReason =
+        '回答の形式が正しくありません。';
+
+    // 最大3回試す
     for ($attempt = 1; $attempt <= 3; $attempt++) {
 
         $ch = curl_init($url);
@@ -141,13 +221,10 @@ PROMPT;
                 'x-goog-api-key: ' . $apiKey
             ],
 
-            CURLOPT_POSTFIELDS => json_encode(
-                $data,
-                JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
-            ),
+            CURLOPT_POSTFIELDS => $requestBody,
 
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_TIMEOUT => 25
+            CURLOPT_CONNECTTIMEOUT => 15,
+            CURLOPT_TIMEOUT => 45
         ]);
 
         $response = curl_exec($ch);
@@ -171,7 +248,10 @@ PROMPT;
         // HTTPエラー
         if ($httpCode !== 200) {
 
-            $errorData = json_decode($response, true);
+            $errorData = json_decode(
+                $response,
+                true
+            );
 
             $errorMessage =
                 $errorData['error']['message']
@@ -189,14 +269,17 @@ PROMPT;
         }
 
         // APIレスポンスを解析
-        $result = json_decode($response, true);
+        $result = json_decode(
+            $response,
+            true
+        );
 
         if (!is_array($result)) {
-            $lastReason = 'APIレスポンスがJSONではありません。';
+            $lastReason =
+                'APIレスポンスがJSONではありません。';
             continue;
         }
 
-        // Geminiの生成内容を取得
         $parts =
             $result['candidates'][0]['content']['parts']
             ?? [];
@@ -213,26 +296,33 @@ PROMPT;
         }
 
         // JSON解析
-        $aiData = json_decode($outputText, true);
+        $aiData = json_decode(
+            $outputText,
+            true
+        );
 
         if (
             !is_array($aiData) ||
-            !isset($aiData['answer'], $aiData['emojis']) ||
+            !isset(
+                $aiData['answer'],
+                $aiData['emojis']
+            ) ||
             !is_string($aiData['answer']) ||
             !is_array($aiData['emojis']) ||
             count($aiData['emojis']) !== 3
         ) {
             $lastReason =
-                '回答と絵文字3つのJSON形式が不正です。';
+                '回答と絵文字3個のJSON形式が不正です。';
 
             error_log(
-                'Gemini JSON形式エラー attempt=' . $attempt
+                'Gemini JSON形式エラー attempt=' .
+                $attempt
             );
 
             continue;
         }
 
-        // 回答を取得
+        // 回答文の検証
         $answer = trim($aiData['answer']);
 
         if (
@@ -241,12 +331,11 @@ PROMPT;
         ) {
             $lastReason =
                 '回答が空、または30文字を超えています。';
-
             continue;
         }
 
-        // 絵文字を取得
-        $cleanEmojis = [];
+        // 絵文字が12個の候補に含まれるか検証
+        $selectedEmojis = [];
         $valid = true;
 
         foreach ($aiData['emojis'] as $emoji) {
@@ -256,49 +345,33 @@ PROMPT;
                 break;
             }
 
-            // 絵文字を1つ抽出
-            $pattern =
-                '/\p{Extended_Pictographic}' .
-                '(?:\x{FE0F}|\p{Emoji_Modifier}' .
-                '|\x{200D}\p{Extended_Pictographic})*/u';
-
-            $matched = @preg_match(
-                $pattern,
+            // 完全一致で確認
+            if (!in_array(
                 $emoji,
-                $match
-            );
-
-            // 正規表現が対応していない場合の代替処理
-            if ($matched !== 1) {
-                $matched = preg_match(
-                    '/[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]/u',
-                    $emoji,
-                    $match
-                );
-            }
-
-            if (
-                $matched !== 1 ||
-                empty($match[0])
-            ) {
+                $emojiPool,
+                true
+            )) {
                 $valid = false;
                 break;
             }
 
-            $cleanEmojis[] = $match[0];
+            $selectedEmojis[] = $emoji;
         }
 
-        // 絵文字3つと重複を確認
+        // 3個で重複がないか確認
         if (
             !$valid ||
-            count($cleanEmojis) !== 3 ||
-            count(array_unique($cleanEmojis)) !== 3
+            count($selectedEmojis) !== 3 ||
+            count(array_unique(
+                $selectedEmojis
+            )) !== 3
         ) {
             $lastReason =
-                '絵文字を3つ抽出できないか、重複しています。';
+                '配布された12個から異なる絵文字3個を選べていません。';
 
             error_log(
-                'Gemini絵文字エラー attempt=' . $attempt
+                'Gemini絵文字選択エラー attempt=' .
+                $attempt
             );
 
             continue;
@@ -307,11 +380,11 @@ PROMPT;
         // 正常に生成できた場合
         return [
             'answer' => $answer,
-            'emojis' => $cleanEmojis
+            'emojis' => $selectedEmojis,
+            'emoji_pool' => $emojiPool
         ];
     }
 
-    // 3回失敗した場合
     throw new Exception(
         'Geminiの回答を3回生成しましたが、' .
         $lastReason

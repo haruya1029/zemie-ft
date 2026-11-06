@@ -5,7 +5,9 @@ session_start();
 require_once __DIR__ . '/../db/connect_db.php';
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
 
+// エラー応答
 function sendError($message, $status = 400)
 {
     global $pdo;
@@ -49,7 +51,10 @@ if (!$room_id || $room_id <= 0) {
 try {
     $pdo->beginTransaction();
 
-    // ルーム参加確認
+    /* ========================================
+       1. ルーム参加確認
+    ======================================== */
+
     $stmt = $pdo->prepare("
         SELECT id
         FROM who_is_ai.room_players
@@ -63,10 +68,16 @@ try {
     ]);
 
     if (!$stmt->fetch()) {
-        sendError('このルームに参加していません。', 403);
+        sendError(
+            'このルームに参加していません。',
+            403
+        );
     }
 
-    // 現在のラウンド取得
+    /* ========================================
+       2. 現在のラウンド取得
+    ======================================== */
+
     $stmt = $pdo->prepare("
         SELECT
             r.id,
@@ -82,15 +93,37 @@ try {
         FOR UPDATE OF r
     ");
 
-    $stmt->execute([':room_id' => $room_id]);
+    $stmt->execute([
+        ':room_id' => $room_id
+    ]);
+
     $round = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    /* ========================================
+       3. ホスト確認
+    ======================================== */
+
+    $stmt = $pdo->prepare("
+        SELECT host_user_id
+        FROM who_is_ai.rooms
+        WHERE id = :room_id
+    ");
+
+    $stmt->execute([
+        ':room_id' => $room_id
+    ]);
+
+    $is_host =
+        (int)$stmt->fetchColumn() === $user_id;
+
+    // まだラウンドが存在しない場合
     if (!$round) {
         $pdo->commit();
 
         echo json_encode([
             'success' => true,
             'status' => 'waiting',
+            'is_host' => $is_host,
             'message' => 'ゲーム開始待ちです。'
         ], JSON_UNESCAPED_UNICODE);
 
@@ -100,28 +133,26 @@ try {
     $round_id = (int)$round['id'];
     $status = $round['status'];
 
-    // ホスト確認
-    $stmt = $pdo->prepare("
-        SELECT host_user_id
-        FROM who_is_ai.rooms
-        WHERE id = :room_id
-    ");
+    /* ========================================
+       4. 参加人数
+    ======================================== */
 
-    $stmt->execute([':room_id' => $room_id]);
-
-    $is_host = (int)$stmt->fetchColumn() === $user_id;
-
-    // 参加人数
     $stmt = $pdo->prepare("
         SELECT COUNT(*)
         FROM who_is_ai.room_players
         WHERE room_id = :room_id
     ");
 
-    $stmt->execute([':room_id' => $room_id]);
+    $stmt->execute([
+        ':room_id' => $room_id
+    ]);
+
     $player_count = (int)$stmt->fetchColumn();
 
-    // 人間の回答数
+    /* ========================================
+       5. 人間の回答数
+    ======================================== */
+
     $stmt = $pdo->prepare("
         SELECT COUNT(*)
         FROM who_is_ai.answers
@@ -129,10 +160,16 @@ try {
           AND is_ai = FALSE
     ");
 
-    $stmt->execute([':round_id' => $round_id]);
+    $stmt->execute([
+        ':round_id' => $round_id
+    ]);
+
     $answer_count = (int)$stmt->fetchColumn();
 
-    // 人間の絵文字提出数
+    /* ========================================
+       6. 人間の絵文字提出数
+    ======================================== */
+
     $stmt = $pdo->prepare("
         SELECT COUNT(*)
         FROM who_is_ai.hints h
@@ -142,10 +179,16 @@ try {
           AND a.is_ai = FALSE
     ");
 
-    $stmt->execute([':round_id' => $round_id]);
+    $stmt->execute([
+        ':round_id' => $round_id
+    ]);
+
     $hint_count = (int)$stmt->fetchColumn();
 
-    // 自分の回答状況
+    /* ========================================
+       7. 自分の回答状況
+    ======================================== */
+
     $stmt = $pdo->prepare("
         SELECT COUNT(*)
         FROM who_is_ai.answers
@@ -159,9 +202,13 @@ try {
         ':user_id' => $user_id
     ]);
 
-    $has_answered = (int)$stmt->fetchColumn() > 0;
+    $has_answered =
+        (int)$stmt->fetchColumn() > 0;
 
-    // 自分の絵文字提出状況
+    /* ========================================
+       8. 自分のヒント提出状況
+    ======================================== */
+
     $stmt = $pdo->prepare("
         SELECT COUNT(*)
         FROM who_is_ai.hints h
@@ -177,22 +224,36 @@ try {
         ':user_id' => $user_id
     ]);
 
-    $has_submitted_hint = (int)$stmt->fetchColumn() > 0;
+    $has_submitted_hint =
+        (int)$stmt->fetchColumn() > 0;
 
-    // AIの回答と絵文字がそろっているか
+    /* ========================================
+       9. AIの準備状況
+    ======================================== */
+
     $stmt = $pdo->prepare("
         SELECT COUNT(*)
         FROM who_is_ai.answers a
         JOIN who_is_ai.hints h
           ON h.answer_id = a.id
+        JOIN who_is_ai.emoji_pools ep
+          ON ep.answer_id = a.id
         WHERE a.round_id = :round_id
           AND a.is_ai = TRUE
     ");
 
-    $stmt->execute([':round_id' => $round_id]);
-    $ai_ready = (int)$stmt->fetchColumn() === 1;
+    $stmt->execute([
+        ':round_id' => $round_id
+    ]);
 
-    // 全員が回答したら絵文字入力へ
+    $ai_ready =
+        (int)$stmt->fetchColumn() === 1;
+
+    /* ========================================
+       10. ゲーム状態を更新
+    ======================================== */
+
+    // 全員が回答したら絵文字選択へ
     if (
         $status === 'answering' &&
         $player_count > 0 &&
@@ -200,18 +261,19 @@ try {
     ) {
         $status = 'hinting';
     }
-    // 全員のヒントとAIがそろったら直接投票へ
+
+    // 全員の絵文字が揃ったら投票へ
     if (
         $status === 'hinting' &&
         $player_count > 0 &&
         $hint_count === $player_count &&
         $ai_ready
-        ) {
-            $status = 'voting';
-            }
+    ) {
+        $status = 'voting';
+    }
 
-    // 状態変更を保存
     if ($status !== $round['status']) {
+
         $stmt = $pdo->prepare("
             UPDATE who_is_ai.rounds
             SET status = :status
@@ -224,17 +286,22 @@ try {
         ]);
     }
 
-    // 投票数
+    /* ========================================
+       11. 投票状況
+    ======================================== */
+
     $stmt = $pdo->prepare("
         SELECT COUNT(*)
         FROM who_is_ai.votes
         WHERE round_id = :round_id
     ");
 
-    $stmt->execute([':round_id' => $round_id]);
+    $stmt->execute([
+        ':round_id' => $round_id
+    ]);
+
     $vote_count = (int)$stmt->fetchColumn();
 
-    // 自分の投票状況
     $stmt = $pdo->prepare("
         SELECT COUNT(*)
         FROM who_is_ai.votes
@@ -247,14 +314,19 @@ try {
         ':user_id' => $user_id
     ]);
 
-    $has_voted = (int)$stmt->fetchColumn() > 0;
+    $has_voted =
+        (int)$stmt->fetchColumn() > 0;
 
-    // フロントに返すデータ
+    /* ========================================
+       12. 基本レスポンス
+    ======================================== */
+
     $response = [
         'success' => true,
         'room_id' => $room_id,
         'round_id' => $round_id,
-        'round_number' => (int)$round['round_number'],
+        'round_number' =>
+            (int)$round['round_number'],
         'question' => $round['question_text'],
         'status' => $status,
         'is_host' => $is_host,
@@ -263,12 +335,20 @@ try {
         'hint_count' => $hint_count,
         'vote_count' => $vote_count,
         'has_answered' => $has_answered,
-        'has_submitted_hint' => $has_submitted_hint,
+        'has_submitted_hint' =>
+            $has_submitted_hint,
         'has_voted' => $has_voted
     ];
 
-    // 議論中は絵文字だけを公開
-    if ($status === 'discussing') {
+    /* ========================================
+       13. 投票中：絵文字だけ公開
+    ======================================== */
+
+    if (
+        $status === 'discussing' ||
+        $status === 'voting'
+    ) {
+
         $stmt = $pdo->prepare("
             SELECT
                 a.id AS answer_id,
@@ -282,53 +362,96 @@ try {
             ORDER BY a.id
         ");
 
-        $stmt->execute([':round_id' => $round_id]);
+        $stmt->execute([
+            ':round_id' => $round_id
+        ]);
 
-        $response['hints'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $response['answers'] =
+            $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 回答文・AIの正体・候補12個は返さない
     }
 
-    // 投票・結果では回答文も公開
-    if ($status === 'voting' || $status === 'result') {
+    /* ========================================
+       14. 結果発表：すべて公開
+    ======================================== */
+
+    if ($status === 'result') {
+
         $stmt = $pdo->prepare("
             SELECT
                 a.id AS answer_id,
                 a.answer_text,
+                a.is_ai,
+                u.username,
                 h.emoji1,
                 h.emoji2,
-                h.emoji3
+                h.emoji3,
+                ep.emojis AS emoji_pool
             FROM who_is_ai.answers a
             JOIN who_is_ai.hints h
               ON h.answer_id = a.id
+            LEFT JOIN who_is_ai.users u
+              ON a.user_id = u.id
+            LEFT JOIN who_is_ai.emoji_pools ep
+              ON ep.answer_id = a.id
             WHERE a.round_id = :round_id
             ORDER BY a.id
         ");
 
-        $stmt->execute([':round_id' => $round_id]);
+        $stmt->execute([
+            ':round_id' => $round_id
+        ]);
 
-        $response['answers'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+        $answers =
+            $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 結果発表
-    if ($status === 'result') {
+        // JSONBをPHP配列に変換
+        foreach ($answers as &$answer) {
 
-        // AIの回答ID
-        $stmt = $pdo->prepare("
-            SELECT id
-            FROM who_is_ai.answers
-            WHERE round_id = :round_id
-              AND is_ai = TRUE
-            LIMIT 1
-        ");
+            $answer['answer_id'] =
+                (int)$answer['answer_id'];
 
-        $stmt->execute([':round_id' => $round_id]);
+            $answer['is_ai'] =
+                ($answer['is_ai'] === true ||
+                 $answer['is_ai'] === 't' ||
+                 $answer['is_ai'] === '1');
 
-        $ai_answer_id = $stmt->fetchColumn();
+            $answer['username'] =
+                $answer['is_ai']
+                ? 'AI'
+                : ($answer['username'] ?? 'UNKNOWN');
 
-        $response['ai_answer_id'] = $ai_answer_id
-            ? (int)$ai_answer_id
-            : null;
+            $answer['emoji_pool'] =
+                $answer['emoji_pool'] !== null
+                ? json_decode(
+                    $answer['emoji_pool'],
+                    true
+                )
+                : [];
+        }
 
-        // ランキング
+        unset($answer);
+
+        $response['answers'] = $answers;
+
+        /* AIの回答ID */
+
+        $ai_answer_id = null;
+
+        foreach ($answers as $answer) {
+            if ($answer['is_ai']) {
+                $ai_answer_id =
+                    $answer['answer_id'];
+                break;
+            }
+        }
+
+        $response['ai_answer_id'] =
+            $ai_answer_id;
+
+        /* ランキング */
+
         $stmt = $pdo->prepare("
             SELECT
                 u.username,
@@ -337,19 +460,29 @@ try {
             JOIN who_is_ai.users u
               ON s.user_id = u.id
             WHERE s.room_id = :room_id
-            ORDER BY s.points DESC, u.username ASC
+            ORDER BY
+                s.points DESC,
+                u.username ASC
         ");
 
-        $stmt->execute([':room_id' => $room_id]);
+        $stmt->execute([
+            ':room_id' => $room_id
+        ]);
 
-        $response['scores'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $response['scores'] =
+            $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /* ========================================
+       15. DB処理を確定
+    ======================================== */
 
     $pdo->commit();
 
     echo json_encode(
         $response,
-        JSON_UNESCAPED_UNICODE
+        JSON_UNESCAPED_UNICODE |
+        JSON_THROW_ON_ERROR
     );
 
 } catch (Throwable $e) {
