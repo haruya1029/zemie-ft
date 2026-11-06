@@ -3,7 +3,10 @@
 session_start();
 
 require_once __DIR__ . '/../db/connect_db.php';
+<<<<<<< HEAD
 require_once __DIR__ . '/lib/contextual_emoji_pool.php';
+=======
+>>>>>>> origin/main
 
 // ログイン確認
 if (!isset($_SESSION['user_id'])) {
@@ -17,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit("不正なリクエストです。");
 }
 
+<<<<<<< HEAD
 // 送信情報を取得
 $user_id = (int)$_SESSION['user_id'];
 
@@ -32,11 +36,20 @@ $answer_input = $_POST['answer_text'] ?? '';
    1. 入力チェック
 ======================================== */
 
+=======
+// 送信された情報を取得
+$user_id = $_SESSION['user_id'];
+$round_id = filter_input(INPUT_POST, 'round_id', FILTER_VALIDATE_INT);
+$answer_text = trim($_POST['answer_text'] ?? '');
+
+// 入力チェック
+>>>>>>> origin/main
 if (!$round_id || $round_id <= 0) {
     http_response_code(400);
     exit("ラウンドIDが正しくありません。");
 }
 
+<<<<<<< HEAD
 // 配列などの不正な入力を防止
 if (!is_string($answer_input)) {
     http_response_code(400);
@@ -49,11 +62,16 @@ if (
     $answer_text === '' ||
     mb_strlen($answer_text, 'UTF-8') > 200
 ) {
+=======
+if (!is_string($answer_text) || $answer_text === '' ||
+    mb_strlen($answer_text) > 200) {
+>>>>>>> origin/main
     http_response_code(400);
     exit("回答は1〜200文字で入力してください。");
 }
 
 try {
+<<<<<<< HEAD
 
     $pdo->beginTransaction();
 
@@ -75,11 +93,21 @@ try {
             ON r.room_id = rm.id
         JOIN who_is_ai.questions q
             ON r.question_id = q.id
+=======
+    $pdo->beginTransaction();
+
+    // 対象ラウンドとルームの状態を確認
+    $sql = "
+        SELECT r.id, r.room_id, r.status, rm.status AS room_status
+        FROM who_is_ai.rounds r
+        JOIN who_is_ai.rooms rm ON r.room_id = rm.id
+>>>>>>> origin/main
         WHERE r.id = :round_id
         FOR UPDATE OF r
     ";
 
     $stmt = $pdo->prepare($sql);
+<<<<<<< HEAD
 
     $stmt->execute([
         ':round_id' => $round_id
@@ -101,6 +129,18 @@ try {
        3. ルーム参加者か確認
     ======================================== */
 
+=======
+    $stmt->execute([':round_id' => $round_id]);
+    $round = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$round ||
+        $round['status'] !== 'answering' ||
+        $round['room_status'] !== 'playing') {
+        throw new Exception("現在は回答できません。");
+    }
+
+    // ルームに参加しているか確認
+>>>>>>> origin/main
     $sql = "
         SELECT id
         FROM who_is_ai.room_players
@@ -109,12 +149,16 @@ try {
     ";
 
     $stmt = $pdo->prepare($sql);
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
     $stmt->execute([
         ':room_id' => $round['room_id'],
         ':user_id' => $user_id
     ]);
 
+<<<<<<< HEAD
     if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
         throw new Exception(
             "このルームに参加していません。"
@@ -140,13 +184,28 @@ try {
                 :answer_text,
                 FALSE
             )
+=======
+    if (!$stmt->fetch()) {
+        throw new Exception("このルームに参加していません。");
+    }
+
+    // 回答をDBに保存
+    $sql = "
+        INSERT INTO who_is_ai.answers
+            (round_id, user_id, answer_text, is_ai)
+        VALUES
+            (:round_id, :user_id, :answer_text, FALSE)
+>>>>>>> origin/main
         ON CONFLICT (round_id, user_id)
         DO NOTHING
         RETURNING id
     ";
 
     $stmt = $pdo->prepare($sql);
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
     $stmt->execute([
         ':round_id' => $round_id,
         ':user_id' => $user_id,
@@ -156,6 +215,7 @@ try {
     $answer_id = $stmt->fetchColumn();
 
     if (!$answer_id) {
+<<<<<<< HEAD
         throw new Exception(
             "このラウンドではすでに回答済みです。"
         );
@@ -235,16 +295,26 @@ try {
        8. 保存を確定
     ======================================== */
 
+=======
+        throw new Exception("このラウンドではすでに回答済みです。");
+    }
+
+>>>>>>> origin/main
     $pdo->commit();
 
     echo "回答を保存しました。";
 
+<<<<<<< HEAD
 } catch (Throwable $e) {
 
+=======
+} catch (Exception $e) {
+>>>>>>> origin/main
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
 
+<<<<<<< HEAD
     // サーバーログに詳細を記録
     error_log(
         'submit_answer.php: ' . $e->getMessage()
@@ -267,6 +337,8 @@ try {
     }
 
     // Gemini APIや絵文字生成のエラー
+=======
+>>>>>>> origin/main
     http_response_code(400);
     exit($e->getMessage());
 }

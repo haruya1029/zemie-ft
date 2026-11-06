@@ -4,7 +4,11 @@ session_start();
 
 // ログイン確認
 if (!isset($_SESSION['user_id'])) {
+<<<<<<< HEAD
     header('Location: index.php');
+=======
+    header('Location: home.php');
+>>>>>>> origin/main
     exit;
 }
 
@@ -23,13 +27,26 @@ if ($room_id <= 0) {
     http_response_code(400);
     exit('ルームIDが指定されていません。');
 }
+<<<<<<< HEAD
 ?>
 
+=======
+
+if (
+    isset($_SESSION['room_id']) &&
+    (int)$_SESSION['room_id'] !== $room_id
+) {
+    http_response_code(403);
+    exit('参加しているルームと一致しません。');
+}
+?>
+>>>>>>> origin/main
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
 
 <title>WHO IS AI? - GAME</title>
 
@@ -39,13 +56,21 @@ if ($room_id <= 0) {
    基本デザイン
 ======================================== */
 
+=======
+<title>WHO IS AI? - GAME</title>
+
+<style>
+>>>>>>> origin/main
 * {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
+<<<<<<< HEAD
     min-height: 100vh;
+=======
+>>>>>>> origin/main
     background: #101820;
     color: #ffffff;
     font-family: Arial, sans-serif;
@@ -63,6 +88,7 @@ h1 {
     letter-spacing: 2px;
 }
 
+<<<<<<< HEAD
 h2 {
     margin-top: 0;
     font-size: 22px;
@@ -72,6 +98,8 @@ h3 {
     font-size: 18px;
 }
 
+=======
+>>>>>>> origin/main
 .card {
     background: #1e293b;
     border: 1px solid #334155;
@@ -89,7 +117,10 @@ h3 {
     font-size: 23px;
     font-weight: bold;
     margin-top: 12px;
+<<<<<<< HEAD
     overflow-wrap: anywhere;
+=======
+>>>>>>> origin/main
 }
 
 input,
@@ -104,11 +135,14 @@ textarea {
     font-size: 16px;
 }
 
+<<<<<<< HEAD
 textarea {
     resize: vertical;
     font-family: inherit;
 }
 
+=======
+>>>>>>> origin/main
 button {
     background: #b9ff66;
     color: #101820;
@@ -119,7 +153,10 @@ button {
     cursor: pointer;
     font-size: 15px;
     font-weight: bold;
+<<<<<<< HEAD
     transition: 0.2s;
+=======
+>>>>>>> origin/main
 }
 
 button:hover {
@@ -135,6 +172,7 @@ button:disabled {
     display: none !important;
 }
 
+<<<<<<< HEAD
 /* ========================================
    絵文字選択
 ======================================== */
@@ -203,6 +241,17 @@ button:disabled {
     margin-top: 15px;
     color: #b9ff66;
     font-weight: bold;
+=======
+.emoji-row {
+    display: flex;
+    gap: 10px;
+}
+
+.emoji-row input {
+    text-align: center;
+    font-size: 26px;
+    min-width: 0;
+>>>>>>> origin/main
 }
 
 .emoji-display {
@@ -212,10 +261,13 @@ button:disabled {
     overflow-wrap: anywhere;
 }
 
+<<<<<<< HEAD
 /* ========================================
    投票画面
 ======================================== */
 
+=======
+>>>>>>> origin/main
 .answer-option {
     display: block;
     background: #334155;
@@ -245,10 +297,13 @@ button:disabled {
     font-size: 14px;
 }
 
+<<<<<<< HEAD
 /* ========================================
    メッセージ
 ======================================== */
 
+=======
+>>>>>>> origin/main
 .message {
     margin-top: 15px;
     color: #b9ff66;
@@ -260,6 +315,7 @@ button:disabled {
     color: #ff8b8b;
 }
 
+<<<<<<< HEAD
 /* ========================================
    結果発表
 ======================================== */
@@ -340,6 +396,8 @@ button:disabled {
    スコア
 ======================================== */
 
+=======
+>>>>>>> origin/main
 .score-row {
     padding: 12px;
     border-bottom: 1px solid #334155;
@@ -369,7 +427,10 @@ button:disabled {
     font-size: 25px;
     font-weight: bold;
     margin: 12px 0;
+<<<<<<< HEAD
     overflow-wrap: anywhere;
+=======
+>>>>>>> origin/main
 }
 
 .winner-points {
@@ -384,12 +445,25 @@ button:disabled {
     font-weight: bold;
 }
 
+<<<<<<< HEAD
 /* ========================================
    スマホ対応
 ======================================== */
 
 @media (max-width: 480px) {
 
+=======
+.ai-reveal {
+    background: #334155;
+    border: 2px solid #b9ff66;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 16px;
+    text-align: center;
+}
+
+@media (max-width: 480px) {
+>>>>>>> origin/main
     .container {
         margin: 15px auto;
         padding: 12px;
@@ -399,6 +473,7 @@ button:disabled {
         padding: 18px;
     }
 
+<<<<<<< HEAD
     .emoji-grid {
         grid-template-columns: repeat(4, 1fr);
     }
@@ -421,6 +496,12 @@ button:disabled {
     }
 }
 
+=======
+    .emoji-display {
+        font-size: 30px;
+    }
+}
+>>>>>>> origin/main
 </style>
 </head>
 
@@ -441,12 +522,17 @@ button:disabled {
         ?>
     </p>
 
+<<<<<<< HEAD
     <!-- =====================================
          お題
     ====================================== -->
 
     <div class="card">
 
+=======
+    <!-- お題 -->
+    <div class="card">
+>>>>>>> origin/main
         <p id="roundLabel" class="small">
             ゲーム情報を取得中...
         </p>
@@ -456,6 +542,7 @@ button:disabled {
         </div>
 
         <p id="progress" class="small"></p>
+<<<<<<< HEAD
 
     </div>
 
@@ -470,6 +557,14 @@ button:disabled {
         <p>
             ホストがゲームを開始してください。
         </p>
+=======
+    </div>
+
+    <!-- ゲーム開始待ち -->
+    <div id="waitingSection" class="card hidden">
+        <h2>ゲーム開始待ち</h2>
+        <p>ホストがゲームを開始してください。</p>
+>>>>>>> origin/main
 
         <button
             id="startButton"
@@ -477,6 +572,7 @@ button:disabled {
         >
             ゲーム開始
         </button>
+<<<<<<< HEAD
 
     </div>
 
@@ -490,6 +586,16 @@ button:disabled {
 
         <p class="small">
             回答文は投票終了まで公開されません。
+=======
+    </div>
+
+    <!-- 回答入力 -->
+    <div id="answerSection" class="card hidden">
+        <h2>あなたの回答</h2>
+
+        <p class="small">
+            回答文はほかのプレイヤーには公開されません。
+>>>>>>> origin/main
         </p>
 
         <textarea
@@ -502,6 +608,7 @@ button:disabled {
         <button onclick="submitAnswer()">
             回答を送信
         </button>
+<<<<<<< HEAD
 
     </div>
 
@@ -563,13 +670,42 @@ button:disabled {
          投票画面
     ====================================== -->
 
+=======
+    </div>
+
+    <!-- 絵文字入力 -->
+    <div id="hintSection" class="card hidden">
+        <h2>絵文字ヒントを3つ選ぼう</h2>
+
+        <p class="small">
+            自分の回答を連想させる絵文字を
+            3つ入力してください。
+        </p>
+
+        <div class="emoji-row">
+            <input id="emoji1" maxlength="10" placeholder="😀">
+            <input id="emoji2" maxlength="10" placeholder="🎮">
+            <input id="emoji3" maxlength="10" placeholder="✨">
+        </div>
+
+        <button onclick="submitHint()">
+            ヒントを送信
+        </button>
+    </div>
+
+    <!-- 絵文字だけの投票画面 -->
+>>>>>>> origin/main
     <div id="voteSection" class="card hidden">
 
         <h2>どの絵文字がAI？</h2>
 
         <p class="small">
             全員の絵文字が公開されました！
+<<<<<<< HEAD
             AIが選んだと思うものを選んでください。
+=======
+            AIが考えた絵文字だと思うものを選んでください。
+>>>>>>> origin/main
         </p>
 
         <div id="answerList"></div>
@@ -577,6 +713,7 @@ button:disabled {
         <button onclick="submitVote()">
             この絵文字に投票
         </button>
+<<<<<<< HEAD
 
     </div>
 
@@ -584,6 +721,11 @@ button:disabled {
          通常結果
     ====================================== -->
 
+=======
+    </div>
+
+    <!-- 通常結果 -->
+>>>>>>> origin/main
     <div id="resultSection" class="card hidden">
 
         <h2>結果発表！</h2>
@@ -600,6 +742,7 @@ button:disabled {
         >
             次のラウンドへ
         </button>
+<<<<<<< HEAD
 
     </div>
 
@@ -607,6 +750,11 @@ button:disabled {
          最終結果
     ====================================== -->
 
+=======
+    </div>
+
+    <!-- 最終結果 -->
+>>>>>>> origin/main
     <div id="finalSection" class="card hidden">
 
         <h2 class="final-title">
@@ -626,6 +774,7 @@ button:disabled {
         <p class="final-message">
             ゲーム終了！お疲れさまでした！
         </p>
+<<<<<<< HEAD
 
     </div>
 
@@ -648,6 +797,18 @@ button:disabled {
 
     <!-- メッセージ -->
 
+=======
+    </div>
+
+    <!-- 待機 -->
+    <div id="waitSection" class="card hidden">
+
+        <h2>ほかのプレイヤーを待っています...</h2>
+
+        <p id="waitMessage" class="small"></p>
+    </div>
+
+>>>>>>> origin/main
     <p id="message" class="message"></p>
 
     <button onclick="loadGameState()">
@@ -658,10 +819,13 @@ button:disabled {
 
 <script>
 
+<<<<<<< HEAD
 /* ========================================
    基本設定
 ======================================== */
 
+=======
+>>>>>>> origin/main
 const roomId = <?php
     echo json_encode((int)$room_id);
 ?>;
@@ -676,6 +840,7 @@ let loading = false;
 let operating = false;
 let lastRoundId = null;
 
+<<<<<<< HEAD
 // 絵文字選択
 let emojiPool = [];
 let selectedEmojis = [];
@@ -686,6 +851,8 @@ let emojiPoolLoading = false;
    共通処理
 ======================================== */
 
+=======
+>>>>>>> origin/main
 // 画面をすべて隠す
 function hideSections() {
 
@@ -700,16 +867,22 @@ function hideSections() {
     ];
 
     ids.forEach(id => {
+<<<<<<< HEAD
 
         document.getElementById(id)
             .classList.add('hidden');
 
+=======
+        document.getElementById(id)
+            .classList.add('hidden');
+>>>>>>> origin/main
     });
 }
 
 // メッセージ表示
 function showMessage(text, isError = false) {
 
+<<<<<<< HEAD
     const el =
         document.getElementById('message');
 
@@ -722,6 +895,15 @@ function showMessage(text, isError = false) {
 }
 
 // POST通信
+=======
+    const el = document.getElementById('message');
+
+    el.textContent = text;
+    el.classList.toggle('error', isError);
+}
+
+// APIにPOST
+>>>>>>> origin/main
 async function postData(file, data) {
 
     const body = new URLSearchParams(data);
@@ -742,11 +924,18 @@ async function postData(file, data) {
     try {
         json = JSON.parse(text);
     } catch (e) {
+<<<<<<< HEAD
         // テキスト応答にも対応
     }
 
     if (!response.ok) {
 
+=======
+        // JSON以外にも対応
+    }
+
+    if (!response.ok) {
+>>>>>>> origin/main
         throw new Error(
             json?.message ||
             text ||
@@ -755,16 +944,22 @@ async function postData(file, data) {
     }
 
     if (json && json.success === false) {
+<<<<<<< HEAD
 
         throw new Error(
             json.message ||
             '処理に失敗しました。'
+=======
+        throw new Error(
+            json.message || '処理に失敗しました。'
+>>>>>>> origin/main
         );
     }
 
     return json?.message || text;
 }
 
+<<<<<<< HEAD
 /* ========================================
    絵文字12個の取得
 ======================================== */
@@ -939,6 +1134,9 @@ function updateEmojiPreview() {
    ゲーム状態の取得
 ======================================== */
 
+=======
+// ゲーム状態取得
+>>>>>>> origin/main
 async function loadGameState() {
 
     if (loading || operating) {
@@ -961,7 +1159,10 @@ async function loadGameState() {
         const state = await response.json();
 
         if (!response.ok || !state.success) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             throw new Error(
                 state.message ||
                 'ゲーム情報を取得できません。'
@@ -969,6 +1170,7 @@ async function loadGameState() {
         }
 
         latestState = state;
+<<<<<<< HEAD
 
         currentRoundId =
             state.round_id || null;
@@ -976,10 +1178,17 @@ async function loadGameState() {
         currentStatus = state.status;
 
         // 新しいラウンドなら初期化
+=======
+        currentRoundId = state.round_id || null;
+        currentStatus = state.status;
+
+        // 新ラウンドなら入力欄をリセット
+>>>>>>> origin/main
         if (
             currentRoundId &&
             currentRoundId !== lastRoundId
         ) {
+<<<<<<< HEAD
 
             document.getElementById(
                 'answerText'
@@ -990,6 +1199,12 @@ async function loadGameState() {
             emojiPoolRoundId = null;
 
             renderEmojiPool();
+=======
+            document.getElementById('answerText').value = '';
+            document.getElementById('emoji1').value = '';
+            document.getElementById('emoji2').value = '';
+            document.getElementById('emoji3').value = '';
+>>>>>>> origin/main
 
             lastRoundId = currentRoundId;
         }
@@ -998,10 +1213,14 @@ async function loadGameState() {
 
     } catch (error) {
 
+<<<<<<< HEAD
         showMessage(
             error.message,
             true
         );
+=======
+        showMessage(error.message, true);
+>>>>>>> origin/main
 
     } finally {
 
@@ -1009,10 +1228,14 @@ async function loadGameState() {
     }
 }
 
+<<<<<<< HEAD
 /* ========================================
    ゲーム画面の切り替え
 ======================================== */
 
+=======
+// 画面切り替え
+>>>>>>> origin/main
 function renderGame(state) {
 
     hideSections();
@@ -1026,6 +1249,7 @@ function renderGame(state) {
     const progressEl =
         document.getElementById('progress');
 
+<<<<<<< HEAD
     /* ゲーム開始待ち */
 
     if (state.status === 'waiting') {
@@ -1035,6 +1259,13 @@ function renderGame(state) {
         questionEl.textContent =
             'ゲーム開始待ち';
 
+=======
+    // 開始待ち
+    if (state.status === 'waiting') {
+
+        roundEl.textContent = 'WAITING';
+        questionEl.textContent = 'ゲーム開始待ち';
+>>>>>>> origin/main
         progressEl.textContent = '';
 
         document.getElementById(
@@ -1045,12 +1276,17 @@ function renderGame(state) {
             'startButton'
         ).classList.toggle(
             'hidden',
+<<<<<<< HEAD
             !state.is_host
+=======
+            state.is_host === false
+>>>>>>> origin/main
         );
 
         return;
     }
 
+<<<<<<< HEAD
     /* お題・進行状況 */
 
     roundEl.textContent =
@@ -1058,11 +1294,17 @@ function renderGame(state) {
         state.round_number +
         ' / ' +
         MAX_ROUNDS;
+=======
+    roundEl.textContent =
+        'ROUND ' + state.round_number +
+        ' / ' + MAX_ROUNDS;
+>>>>>>> origin/main
 
     questionEl.textContent =
         state.question || '';
 
     progressEl.textContent =
+<<<<<<< HEAD
         '回答 ' +
         state.answer_count +
         '/' +
@@ -1079,6 +1321,16 @@ function renderGame(state) {
 
     /* 回答中 */
 
+=======
+        '回答 ' + state.answer_count + '/' +
+        state.player_count + '人 ・ ヒント ' +
+        state.hint_count + '/' +
+        state.player_count + '人 ・ 投票 ' +
+        state.vote_count + '/' +
+        state.player_count + '人';
+
+    // 回答入力
+>>>>>>> origin/main
     if (state.status === 'answering') {
 
         if (state.has_answered) {
@@ -1095,8 +1347,12 @@ function renderGame(state) {
         }
     }
 
+<<<<<<< HEAD
     /* 絵文字選択中 */
 
+=======
+    // 絵文字入力
+>>>>>>> origin/main
     else if (state.status === 'hinting') {
 
         if (state.has_submitted_hint) {
@@ -1110,6 +1366,7 @@ function renderGame(state) {
             document.getElementById(
                 'hintSection'
             ).classList.remove('hidden');
+<<<<<<< HEAD
 
             loadEmojiPool();
         }
@@ -1117,6 +1374,12 @@ function renderGame(state) {
 
     /* 投票中 */
 
+=======
+        }
+    }
+
+    // 絵文字だけで投票
+>>>>>>> origin/main
     else if (state.status === 'voting') {
 
         if (state.has_voted) {
@@ -1131,6 +1394,7 @@ function renderGame(state) {
                 'voteSection'
             ).classList.remove('hidden');
 
+<<<<<<< HEAD
             renderAnswers(
                 state.answers || []
             );
@@ -1144,6 +1408,17 @@ function renderGame(state) {
         if (
             Number(state.round_number) >=
             MAX_ROUNDS
+=======
+            renderAnswers(state.answers || []);
+        }
+    }
+
+    // 結果発表
+    else if (state.status === 'result') {
+
+        if (
+            Number(state.round_number) >= MAX_ROUNDS
+>>>>>>> origin/main
         ) {
 
             document.getElementById(
@@ -1162,15 +1437,22 @@ function renderGame(state) {
                 'nextRoundButton'
             ).classList.toggle(
                 'hidden',
+<<<<<<< HEAD
                 !state.is_host
+=======
+                state.is_host !== true
+>>>>>>> origin/main
             );
 
             renderResult(state);
         }
     }
 
+<<<<<<< HEAD
     /* その他 */
 
+=======
+>>>>>>> origin/main
     else {
 
         showWaiting(
@@ -1179,10 +1461,14 @@ function renderGame(state) {
     }
 }
 
+<<<<<<< HEAD
 /* ========================================
    待機画面
 ======================================== */
 
+=======
+// 待機画面
+>>>>>>> origin/main
 function showWaiting(message) {
 
     document.getElementById(
@@ -1194,6 +1480,7 @@ function showWaiting(message) {
     ).textContent = message;
 }
 
+<<<<<<< HEAD
 /* ========================================
    ゲーム開始
 ======================================== */
@@ -1202,10 +1489,17 @@ async function startGame() {
 
     if (operating) return;
 
+=======
+// ゲーム開始
+async function startGame() {
+
+    if (operating) return;
+>>>>>>> origin/main
     operating = true;
 
     try {
 
+<<<<<<< HEAD
         showMessage(
             'ゲームを開始しています...'
         );
@@ -1215,45 +1509,73 @@ async function startGame() {
             {
                 room_id: roomId
             }
+=======
+        showMessage('ゲームを開始しています...');
+
+        const result = await postData(
+            'game_start.php',
+            { room_id: roomId }
+>>>>>>> origin/main
         );
 
         showMessage(result);
 
     } catch (error) {
 
+<<<<<<< HEAD
         showMessage(
             error.message,
             true
         );
+=======
+        showMessage(error.message, true);
+>>>>>>> origin/main
 
     } finally {
 
         operating = false;
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
         await loadGameState();
     }
 }
 
+<<<<<<< HEAD
 /* ========================================
    回答送信
 ======================================== */
 
+=======
+// 回答送信
+>>>>>>> origin/main
 async function submitAnswer() {
 
     if (operating) return;
 
     const answer =
+<<<<<<< HEAD
         document.getElementById(
             'answerText'
         ).value.trim();
 
     if (!answer) {
 
+=======
+        document.getElementById('answerText')
+            .value.trim();
+
+    if (!answer) {
+>>>>>>> origin/main
         showMessage(
             '回答を入力してください。',
             true
         );
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
         return;
     }
 
@@ -1273,27 +1595,39 @@ async function submitAnswer() {
 
     } catch (error) {
 
+<<<<<<< HEAD
         showMessage(
             error.message,
             true
         );
+=======
+        showMessage(error.message, true);
+>>>>>>> origin/main
 
     } finally {
 
         operating = false;
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
         await loadGameState();
     }
 }
 
+<<<<<<< HEAD
 /* ========================================
    絵文字ヒント送信
 ======================================== */
 
+=======
+// 絵文字送信
+>>>>>>> origin/main
 async function submitHint() {
 
     if (operating) return;
 
+<<<<<<< HEAD
     if (selectedEmojis.length !== 3) {
 
         showMessage(
@@ -1313,6 +1647,24 @@ async function submitHint() {
 
         showMessage(
             '配られた12個から3個選択してください。',
+=======
+    const emoji1 =
+        document.getElementById('emoji1')
+            .value.trim();
+
+    const emoji2 =
+        document.getElementById('emoji2')
+            .value.trim();
+
+    const emoji3 =
+        document.getElementById('emoji3')
+            .value.trim();
+
+    if (!emoji1 || !emoji2 || !emoji3) {
+
+        showMessage(
+            '絵文字を3つ入力してください。',
+>>>>>>> origin/main
             true
         );
 
@@ -1321,17 +1673,26 @@ async function submitHint() {
 
     operating = true;
 
+<<<<<<< HEAD
     updateEmojiPreview();
 
+=======
+>>>>>>> origin/main
     try {
 
         const result = await postData(
             'submit_hint.php',
             {
                 round_id: currentRoundId,
+<<<<<<< HEAD
                 emoji1: selectedEmojis[0],
                 emoji2: selectedEmojis[1],
                 emoji3: selectedEmojis[2]
+=======
+                emoji1: emoji1,
+                emoji2: emoji2,
+                emoji3: emoji3
+>>>>>>> origin/main
             }
         );
 
@@ -1339,14 +1700,19 @@ async function submitHint() {
 
     } catch (error) {
 
+<<<<<<< HEAD
         showMessage(
             error.message,
             true
         );
+=======
+        showMessage(error.message, true);
+>>>>>>> origin/main
 
     } finally {
 
         operating = false;
+<<<<<<< HEAD
 
         await loadGameState();
 
@@ -1358,18 +1724,33 @@ async function submitHint() {
    投票候補を表示
 ======================================== */
 
+=======
+        await loadGameState();
+    }
+}
+
+// 絵文字だけの投票候補
+>>>>>>> origin/main
 function renderAnswers(answers) {
 
     const list =
         document.getElementById('answerList');
 
+<<<<<<< HEAD
     // 自動更新しても選択を維持
+=======
+    // 自動更新時も選択を維持
+>>>>>>> origin/main
     const selected =
         document.querySelector(
             'input[name="voteAnswer"]:checked'
         )?.value || null;
 
+<<<<<<< HEAD
     list.replaceChildren();
+=======
+    list.innerHTML = '';
+>>>>>>> origin/main
 
     answers.forEach((answer, index) => {
 
@@ -1382,9 +1763,13 @@ function renderAnswers(answers) {
             document.createElement('input');
 
         radio.type = 'radio';
+<<<<<<< HEAD
 
         radio.name = 'voteAnswer';
 
+=======
+        radio.name = 'voteAnswer';
+>>>>>>> origin/main
         radio.value = answer.answer_id;
 
         if (
@@ -1418,6 +1803,7 @@ function renderAnswers(answers) {
         label.appendChild(title);
         label.appendChild(emojis);
 
+<<<<<<< HEAD
         radio.addEventListener(
             'change',
             () => {
@@ -1436,6 +1822,17 @@ function renderAnswers(answers) {
                 );
             }
         );
+=======
+        radio.addEventListener('change', () => {
+            document.querySelectorAll(
+                '.answer-option'
+            ).forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            label.classList.add('selected');
+        });
+>>>>>>> origin/main
 
         if (radio.checked) {
             label.classList.add('selected');
@@ -1445,10 +1842,14 @@ function renderAnswers(answers) {
     });
 }
 
+<<<<<<< HEAD
 /* ========================================
    投票送信
 ======================================== */
 
+=======
+// 投票送信
+>>>>>>> origin/main
 async function submitVote() {
 
     if (operating) return;
@@ -1484,19 +1885,27 @@ async function submitVote() {
 
     } catch (error) {
 
+<<<<<<< HEAD
         showMessage(
             error.message,
             true
         );
+=======
+        showMessage(error.message, true);
+>>>>>>> origin/main
 
     } finally {
 
         operating = false;
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
         await loadGameState();
     }
 }
 
+<<<<<<< HEAD
 /* ========================================
    結果発表：全員の回答を公開
 ======================================== */
@@ -1745,10 +2154,37 @@ function renderResult(state) {
     const reveal =
         document.createElement('div');
 
+=======
+// 通常の結果表示
+function renderResult(state) {
+
+    const resultEl =
+        document.getElementById('resultText');
+
+    const scoreEl =
+        document.getElementById('scoreList');
+
+    resultEl.innerHTML = '';
+    scoreEl.innerHTML = '';
+
+    const answers = state.answers || [];
+
+    const aiIndex = answers.findIndex(
+        answer =>
+            String(answer.answer_id) ===
+            String(state.ai_answer_id)
+    );
+
+    const aiAnswer =
+        aiIndex >= 0 ? answers[aiIndex] : null;
+
+    const reveal = document.createElement('div');
+>>>>>>> origin/main
     reveal.className = 'ai-reveal';
 
     if (aiAnswer) {
 
+<<<<<<< HEAD
         const title =
             document.createElement('h3');
 
@@ -1762,6 +2198,14 @@ function renderResult(state) {
 
         emojis.className =
             'emoji-display';
+=======
+        const title = document.createElement('h3');
+        title.textContent =
+            'AIは回答 ' + (aiIndex + 1) + '！';
+
+        const emojis = document.createElement('div');
+        emojis.className = 'emoji-display';
+>>>>>>> origin/main
 
         emojis.textContent = [
             aiAnswer.emoji1,
@@ -1769,6 +2213,7 @@ function renderResult(state) {
             aiAnswer.emoji3
         ].join(' ');
 
+<<<<<<< HEAD
         const answerText =
             document.createElement('p');
 
@@ -1779,15 +2224,24 @@ function renderResult(state) {
         reveal.appendChild(title);
         reveal.appendChild(emojis);
         reveal.appendChild(answerText);
+=======
+        reveal.appendChild(title);
+        reveal.appendChild(emojis);
+>>>>>>> origin/main
 
     } else {
 
         reveal.textContent =
+<<<<<<< HEAD
             'AIの回答を確認できませんでした。';
+=======
+            'AIの絵文字を確認できませんでした。';
+>>>>>>> origin/main
     }
 
     resultEl.appendChild(reveal);
 
+<<<<<<< HEAD
     /* ====================================
        全員の回答と12個の絵文字を公開
     ==================================== */
@@ -1801,6 +2255,8 @@ function renderResult(state) {
        現在のランキング
     ==================================== */
 
+=======
+>>>>>>> origin/main
     (state.scores || []).forEach(
         (score, index) => {
 
@@ -1810,18 +2266,25 @@ function renderResult(state) {
             row.className = 'score-row';
 
             row.textContent =
+<<<<<<< HEAD
                 (index + 1) +
                 '位 ' +
                 score.username +
                 '：' +
                 score.points +
                 '点';
+=======
+                (index + 1) + '位 ' +
+                score.username + '：' +
+                score.points + '点';
+>>>>>>> origin/main
 
             scoreEl.appendChild(row);
         }
     );
 }
 
+<<<<<<< HEAD
 /* ========================================
    最終結果表示
 ======================================== */
@@ -1933,11 +2396,31 @@ function renderFinalResult(state) {
 
         const p =
             document.createElement('p');
+=======
+// 最終結果を表示
+function renderFinalResult(state) {
+
+    const winnerArea =
+        document.getElementById('winnerArea');
+
+    const scoreList =
+        document.getElementById('finalScoreList');
+
+    winnerArea.innerHTML = '';
+    scoreList.innerHTML = '';
+
+    const scores = state.scores || [];
+
+    if (scores.length === 0) {
+
+        const p = document.createElement('p');
+>>>>>>> origin/main
 
         p.textContent =
             'ランキングを取得できませんでした。';
 
         scoreList.appendChild(p);
+<<<<<<< HEAD
     }
 
     /* ====================================
@@ -2013,22 +2496,76 @@ function renderFinalResult(state) {
    次のラウンド
 ======================================== */
 
+=======
+        return;
+    }
+
+    // 1位を表示
+    const winner = scores[0];
+
+    const winnerCard =
+        document.createElement('div');
+
+    winnerCard.className = 'winner-card';
+
+    const trophy = document.createElement('div');
+    trophy.textContent = '🏆 優勝 🏆';
+
+    const name = document.createElement('div');
+    name.className = 'winner-name';
+    name.textContent = winner.username;
+
+    const points = document.createElement('div');
+    points.className = 'winner-points';
+    points.textContent = winner.points + '点';
+
+    winnerCard.appendChild(trophy);
+    winnerCard.appendChild(name);
+    winnerCard.appendChild(points);
+
+    winnerArea.appendChild(winnerCard);
+
+    // 総合ランキング
+    scores.forEach((score, index) => {
+
+        const row = document.createElement('div');
+        row.className = 'score-row';
+
+        row.textContent =
+            (index + 1) + '位 ' +
+            score.username + '：' +
+            score.points + '点';
+
+        scoreList.appendChild(row);
+    });
+}
+
+// 次のラウンド
+>>>>>>> origin/main
 async function nextRound() {
 
     if (operating) return;
 
     if (
         latestState &&
+<<<<<<< HEAD
         Number(
             latestState.round_number
         ) >= MAX_ROUNDS
     ) {
 
+=======
+        Number(latestState.round_number) >= MAX_ROUNDS
+    ) {
+>>>>>>> origin/main
         showMessage(
             '全3ラウンドが終了しました。',
             true
         );
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
         return;
     }
 
@@ -2051,19 +2588,27 @@ async function nextRound() {
 
     } catch (error) {
 
+<<<<<<< HEAD
         showMessage(
             error.message,
             true
         );
+=======
+        showMessage(error.message, true);
+>>>>>>> origin/main
 
     } finally {
 
         operating = false;
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
         await loadGameState();
     }
 }
 
+<<<<<<< HEAD
 /* ========================================
    初期読み込み
 ======================================== */
@@ -2078,6 +2623,13 @@ setInterval(
     loadGameState,
     3000
 );
+=======
+// 最初に読み込む
+loadGameState();
+
+// 3秒ごとに自動更新
+setInterval(loadGameState, 3000);
+>>>>>>> origin/main
 
 </script>
 
